@@ -1,7 +1,8 @@
-(ns solutions.euler
+(ns euler
   (:use [clojure.contrib.lazy-seqs])
   (:use [clojure.contrib.combinatorics])
   (:use [clojure.set]))
+
 ;; problem 1
 
 (defn divides?
@@ -157,7 +158,6 @@
   []
   (time (nth (lex-permutations [0 1 2 3 4 5 6 7 8 9]) 999999)))
 
-
 ;; A perfect number is a number for which the sum of its proper divisors
 ;; is exactly equal to the number. For example, the sum of the proper
 ;; divisors of 28 would be 1 + 2 + 4 + 7 + 14 = 28, which means that 28
@@ -209,18 +209,24 @@
      #(abundant? %)
      (integers-until n)))
 
-(defn sum-of-two-abundants?
+(defn abundant-pairs
   [^Integer n]
-  "Can n be expressed as the sum of two abundant numbers?"
-  (let [s2a (sums-of-two-abundants n)]
-      (some #(= n %) s2a)))
+  (let [abns (abundants n)]
+      (set (concat
+             (combinations abns 2) 
+             (pmap #(replicate 2 %) abns)))))
 
 (defn sums-of-two-abundants
   [^Integer n]
   "List numbers that are sums of two abundant numbers until n"
   (filter #(<= % n)
-	  (set
-	   (pmap #(reduce + %) (combinations (concat (abundants n) (abundants n)) 2)))))
+	  (pmap #(reduce + %) (abundant-pairs n))))
+
+(defn sum-of-two-abundants?
+  [^Integer n]
+  "Can n be expressed as the sum of two abundant numbers?"
+  (let [s2a (sums-of-two-abundants n)]
+      (some #(= n %) s2a)))
 
 (defn problem-23-imp [^Integer n]
   (reduce +
@@ -231,3 +237,8 @@
 (defn problem-23
   []
   (problem-23-imp 28123))
+
+(defn problem-23-timings
+  [& sizes]
+  (pmap #(time (problem-23-imp %)) (vec sizes)))
+
