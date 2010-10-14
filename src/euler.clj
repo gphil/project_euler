@@ -237,8 +237,3 @@
 (defn problem-23
   []
   (problem-23-imp 28123))
-
-(defn problem-23-timings
-  [& sizes]
-  (pmap #(time (problem-23-imp %)) (vec sizes)))
-
