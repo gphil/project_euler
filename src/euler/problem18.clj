@@ -25,10 +25,15 @@
      (for [[col-idx val] (map-indexed vector row)]
        [[(+ 1 row-idx) (+ 1 col-idx)] val])))
 
-(def triangle triangle-list-with-coords)
+(def triangle-map 
+     (apply hash-map
+	    (apply concat
+		   (apply concat
+			  (triangle-list-with-coords triangle-list)))))
 
 (defn get-adjacent-nodes
-  [node])
+  [row col]
+  )
 
 ;;;; the "start" node must have a :row that is 1 less then the "end" node.
 (defn row-adjacent?
