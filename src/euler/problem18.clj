@@ -1,23 +1,33 @@
-(ns euler.problem18)
+(ns euler.problem18
+  (:require [clojure.contrib.duck-streams :as ds]))
 
 ;; Find the maximum total from top to bottom of the triangle below:
 
+;; (def triangle-list
+;;    '((75)
+;;      (95 64)
+;;      (17 47 82)
+;;      (18 35 87 10)
+;;      (20 4  82 47 65)
+;;      (19 1  23 75  3 34)
+;;      (88 2  77 73  7 63 67)
+;;      (99 65  4 28  6 16 70 92)
+;;      (41 41 26 56 83 40 80 70 33)
+;;      (41 48 72 33 47 32 37 16 94 29)
+;;      (53 71 44 65 25 43 91 52 97 51 14)
+;;      (70 11 33 28 77 73 17 78 39 68 17 57)
+;;      (91 71 52 38 17 14 91 43 58 50 27 29 48)
+;;      (63 66 4  68 89 53 67 30 73 16 69 87 40 31)
+;;      (4  62 98 27 23 9  70 98 73 93 38 53 60  4 23)))
+
+;; read in from file:
+
+(defn read-triangle [file]
+  (map (fn [line] (map #(Integer/parseInt %) (re-seq #"\d+" line)))
+       (ds/read-lines file)))
+
 (def triangle-list
-   '((75)
-     (95 64)
-     (17 47 82)
-     (18 35 87 10)
-     (20 4  82 47 65)
-     (19 1  23 75  3 34)
-     (88 2  77 73  7 63 67)
-     (99 65  4 28  6 16 70 92)
-     (41 41 26 56 83 40 80 70 33)
-     (41 48 72 33 47 32 37 16 94 29)
-     (53 71 44 65 25 43 91 52 97 51 14)
-     (70 11 33 28 77 73 17 78 39 68 17 57)
-     (91 71 52 38 17 14 91 43 58 50 27 29 48)
-     (63 66 4  68 89 53 67 30 73 16 69 87 40 31)
-     (4  62 98 27 23 9  70 98 73 93 38 53 60  4 23)))
+     (read-triangle "triangle.txt"))
 
 (defn triangle-list-with-coords
   [triangle-list]
@@ -28,6 +38,7 @@
 	 :y (+ 1 col-idx)
 	 :visited? false
 	 :dist nil
+	 :sum nil
 	 :wt val}])))
 
 (def triangle-map 
@@ -38,9 +49,10 @@
 
 (def triangle (ref triangle-map))
 
+;; i botched this originally, you should only match yourself or yourself + 1
 (defn get-neighbor-coords [[x y]]
   (filter #(not (nil? %))
-   (for [new-y (range (- y 1) (+ y 2))]
+   (for [new-y (range y (+ y 2))]
     (if (> new-y 0)
       [(+ x 1) new-y]))))
 
@@ -49,14 +61,16 @@
    #(not (:visited? %))
    (map @triangle (get-neighbor-coords [x y]))))
 
-(defn calculate-dist [[x y] curdist]
+(defn calculate-dist-sum [[x y] curdist cursum]
   (let [olddist (:dist (@triangle [x y]))
-	newdist (+ curdist (- 100 (:wt (@triangle [x y]))))]
+	oldsum (:sum (@triangle [x y]))
+	newdist (+ curdist (- 100 (:wt (@triangle [x y]))))
+	newsum (+ cursum (:wt (@triangle [x y])))]
     (if (or
 	 (nil? olddist)
 	 (> olddist newdist))
-      newdist
-      olddist)))
+      [newdist newsum]
+      [olddist oldsum])))
 
 ;; do the djikstra:
 
@@ -65,7 +79,7 @@
 
 (defn update-initial-node []
   (alter triangle update-in [[1 1]]
-	 assoc :dist (calculate-dist [1 1] 0)))
+	 assoc :dist (first (calculate-dist-sum [1 1] 0 0)) :sum (second (calculate-dist-sum [1 1] 0 0))))
 
 ;; Set initial node as current.  For current node, consider
 ;; all its unvisited neighbors and calculate their tentative
@@ -78,13 +92,16 @@
 
 (defn update-neighbors [[x y]]
   (let [curdist (:dist (@triangle [x y]))
+	cursum (:sum (@triangle [x y]))
 	nodes (get-unupdated-neighbors [x y])]
     (alter triangle update-in [[x y]] assoc :visited? true)
     (dorun (for [node nodes]
 	     (if (nil? node)
 	       nil
 	       (alter triangle update-in [[(:x node) (:y node)]]
-		      assoc :dist (calculate-dist [(:x node) (:y node)] curdist)))))))
+		      assoc :dist (first (calculate-dist-sum [(:x node) (:y node)] curdist cursum))
+		            :sum (second (calculate-dist-sum [(:x node) (:y node)] curdist cursum))))))))
+
 
 ;; A visited node will not be checked ever again; its distance recorded now
 ;; is final and minimal.  If all nodes have been visited,
@@ -127,11 +144,11 @@
     (dosync (update-neighbors [1 1]))
     (visit-nodes)))
 
-(for [x (range 1 15)]
-  (filter #(= (:x %) x)
-	 (vals @triangle)))
+;; answer from the net, this is embarassing:
 
+(defn merge-rows [a b]
+  (map + (map #(apply max %) (partition 2 1 a)) b))
 
-
+(reduce merge-rows (reverse triangle-list))
 
 
