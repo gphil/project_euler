@@ -144,7 +144,7 @@
     (dosync (update-neighbors [1 1]))
     (visit-nodes)))
 
-;; answer from the net, this is embarassing:
+;; way better answer from the net, this is embarassing:
 
 (defn merge-rows [a b]
   (map + (map #(apply max %) (partition 2 1 a)) b))
