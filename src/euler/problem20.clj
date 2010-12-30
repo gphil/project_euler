@@ -2,7 +2,6 @@
   (:require [clojure.contrib.math :as m])
   (:require [clojure.contrib.lazy-seqs :as l]))
 
-
 ;; A fraction in lowest terms with a prime denominator other than 2 or
 ;; 5 (i.e. coprime to 10) always produces a repeating decimal. The
 ;; period of the repeating decimal of 1/p is equal to the order of 10
@@ -21,7 +20,11 @@
 	       k)))))
 
 (defn problem20 []
-   (+ 1 (apply max (filter #(not (nil? %)) (map #(order 10 %) (take-while #(< % 1000) l/primes))))))
+  (+ 1
+     (apply max
+	    (filter #(not (nil? %))
+		    (map #(order 10 %)
+			 (take-while #(< % 1000) l/primes))))))
 
 
 

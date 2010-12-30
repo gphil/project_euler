@@ -15,7 +15,7 @@
 ;; How many circular primes are there below one million?
 
 (defn primes-until [num]
-  (set (take-while #(< % num) l/primes)))
+  (set (take-while #(<= % num) l/primes)))
 
 (defn candidates [p]
   (map #(Integer/parseInt %)
